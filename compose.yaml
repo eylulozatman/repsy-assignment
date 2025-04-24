@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  repsy-api:
+    build: .
+    container_name: repsy-api
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/repsy
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - storage.strategy=object-storage
+      - storage.object.url=http://minio:9000
+      - storage.object.bucketName=repsy-bucket
+      - storage.object.accessKey=minioadmin
+      - storage.object.secretKey=minioadmin
+    depends_on:
+      - postgres
+      - minio
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_DB: repsy
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+
+volumes:
+  minio-data:
